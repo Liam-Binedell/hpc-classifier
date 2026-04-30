@@ -1,0 +1,25 @@
+#ifndef LOADER_H_
+#define LOADER_H_
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct {
+    float **data;
+    uint32_t size;
+    uint32_t n_rows;
+    uint32_t n_cols;
+    uint32_t img_size;
+} Images;
+
+typedef struct {
+    uint8_t *data;
+    uint32_t size;
+} Labels;
+
+uint32_t read_uint32(FILE *f);
+void load_images(const char *path, Images *imgs);
+void load_labels(const char *path, Labels *lbls);
+void free_images(Images *imgs);
+
+#endif // LOADER_H_
