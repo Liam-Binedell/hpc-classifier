@@ -4,3 +4,5 @@
 tmp/
 datasets/
 classifier
+classifier_mpi
+*.o
