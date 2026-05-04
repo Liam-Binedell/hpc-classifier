@@ -2,7 +2,6 @@
 #define LOADER_H_
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 typedef struct {
     float **data;
