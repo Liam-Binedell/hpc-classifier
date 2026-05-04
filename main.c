@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define EPOCHS 10
+#define EPOCHS 40
 #define LR 0.01
 #define N_OUTPUTS 10
 
@@ -30,7 +30,7 @@ int main() {
     Labels train_lbls = {NULL, 0};
 
     Images test_imgs = {NULL, 0, 0, 0, 0};
-    Labels test_lbls = { NULL, 0};
+    Labels test_lbls = {NULL, 0};
     Network network;
     Trainer trainer;
 
@@ -48,9 +48,13 @@ int main() {
     trainer_init(&trainer, &network);
 
     int correct;
+    double accuracy, prev_accuracy, train_accuracy;
     double y[N_OUTPUTS];
 
     // TRAIN FOR THE SET AMOUNT OF EPOCHS
+    // OR UNTIL A SATISFACTORY LEVEL OF CONVERGENCE IS ACHIEVED
+    accuracy = 0.0;
+    prev_accuracy = 0.0;
     for (int epoch = 0; epoch < EPOCHS; epoch++) {
         correct = 0;
         for (int i = 0; i < train_imgs.size; i++) {
@@ -59,8 +63,21 @@ int main() {
             if (argmax(network.output, N_OUTPUTS) == train_lbls.data[i])
                 correct++;
         }
-        printf("Epoch %d — Accuracy: %.2f%%\n", epoch + 1,
-               (double)correct / train_imgs.size * 100.0);
+        prev_accuracy = accuracy;
+        train_accuracy = (double)correct / train_imgs.size * 100.0;
+
+        correct = 0;
+        for (int i = 0; i < test_imgs.size; i++) {
+            network_predict(&network, test_imgs.data[i]);
+            if (argmax(network.output, N_OUTPUTS) == test_lbls.data[i])
+                correct++;
+        }
+        accuracy = (double)correct / test_imgs.size * 100.0;
+        if (accuracy - prev_accuracy < 0.0)
+            break;
+
+
+        printf("Epoch %d — Accuracy: %.2f%%\n", epoch + 1, train_accuracy);
     }
 
     // TEST TRAINED MODEL ON UNSEEN DATA
@@ -70,7 +87,8 @@ int main() {
         if (argmax(network.output, N_OUTPUTS) == test_lbls.data[i])
             correct++;
     }
-    printf("TESTING ACCURACY: %.2f%%\n", (double)correct/test_imgs.size * 100.0);
+    printf("FINAL TESTING ACCURACY: %.2f%%\n",
+           (double)correct / test_imgs.size * 100.0);
 
     trainer_free(&trainer);
     network_free(&network);
