@@ -18,6 +18,8 @@ typedef struct {
 uint32_t read_uint32(FILE *f);
 void load_images(const char *path, Images *imgs);
 void load_labels(const char *path, Labels *lbls);
+void mpi_load_images(const char *path, Images *imgs, int rank, int n_workers);
+void mpi_load_labels(const char *path, Labels *lbls, int rank, int n_workers);
 void free_images(Images *imgs);
 
 #endif // LOADER_H_

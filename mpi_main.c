@@ -32,14 +32,14 @@ int argmax(double *vec, int size) {
 int main(int argc, char **argv) {
     srand(time(NULL));
     MPI_Init(&argc, &argv);
-    int processes, rank;
+    int n_workers, rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &processes);
+    MPI_Comm_size(MPI_COMM_WORLD, &n_workers);
 
-    Images train_imgs = {NULL, 0, 0, 0, 0};
+    Images train_imgs = {NULL, 0};
     Labels train_lbls = {NULL, 0};
 
-    Images test_imgs = {NULL, 0, 0, 0, 0};
+    Images test_imgs = {NULL, 0};
     Labels test_lbls = {NULL, 0};
 
     Network network;
@@ -49,6 +49,14 @@ int main(int argc, char **argv) {
 
     broadcast_network(&network);
 
-    printf("poes\n");
+    if (rank != 0) {
+        mpi_load_images("datasets/train-images.idx3-ubyte", &train_imgs, rank, n_workers);
+        mpi_load_labels("datasets/train-labels.idx1-ubyte", &train_lbls, rank, n_workers);
+        printf("Process %d loaded %u images\n", rank, train_imgs.size);
+        printf("Process %d loaded %u labels\n", rank, train_lbls.size);
+        free_images(&train_imgs);
+        free(train_lbls.data);
+    }
+    MPI_Finalize();
     return 0;
 }

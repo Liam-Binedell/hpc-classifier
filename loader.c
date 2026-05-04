@@ -1,5 +1,6 @@
 #include "loader.h"
 #include <byteswap.h>
+#include <stdlib.h>
 #define ERR(format, ...)                             \
     {                                                \
         fprintf(stderr, format "\n", ##__VA_ARGS__); \
@@ -21,21 +22,19 @@ void load_images(const char *path, Images *imgs) {
     read_uint32(f); // parse and skip magic number
     // Parsing the mnist headers
     imgs->size = read_uint32(f);
-    imgs->n_rows = read_uint32(f);
-    imgs->n_cols = read_uint32(f);
+    read_uint32(f);
+    read_uint32(f);
 
-    imgs->img_size = imgs->n_rows * imgs->n_cols;
-    printf("Size of each image: %u\n", imgs->img_size);
     imgs->data = (float **)malloc(imgs->size * sizeof(float *));
     if (!imgs->data)
         ERR("Could not allocate memory for images");
 
     for (int i = 0; i < imgs->size; i++) {
-        imgs->data[i] = (float *)malloc(imgs->img_size * sizeof(float));
+        imgs->data[i] = (float *)malloc(IMAGE_SIZE * sizeof(float));
         if (!imgs->data[i])
             ERR("Could not allocate memory for image %d", i);
 
-        for (int j = 0; j < imgs->img_size; j++) {
+        for (int j = 0; j < IMAGE_SIZE; j++) {
             uint8_t pixel;
             fread(&pixel, 1, 1, f);
             imgs->data[i][j] = pixel/255.0f; // division to normalise values in range [0,1]
@@ -59,6 +58,50 @@ void load_labels(const char *path, Labels *lbls) {
 
     fread(lbls->data, 1, lbls->size, f);
 
+    fclose(f);
+}
+
+void mpi_load_images(const char *path, Images *imgs, int rank, int n_workers) {
+    FILE *f = fopen(path, "rb");
+    if (!f)
+        ERR("Could not open mpi train images");
+
+    read_uint32(f); // always parse magic number
+    // DOES allow each worker to load a proportional
+    // number of images
+    uint32_t total_size = read_uint32(f);
+    uint32_t local_size = total_size / n_workers;
+    uint32_t idx = (rank - 1) * local_size;
+
+    fseek(f, 16 + idx * IMAGE_SIZE, SEEK_SET);
+    imgs->data = (float **)malloc(local_size * sizeof(float *));
+    for (int i = 0; i < local_size; i++) {
+        imgs->data[i] = (float *)malloc(IMAGE_SIZE * sizeof(float));
+
+        for (int j = 0; j < IMAGE_SIZE; j++) {
+            uint8_t pixel;
+            fread(&pixel, 1, 1, f);
+            imgs->data[i][j] = pixel/255.0f;
+        }
+    }
+    imgs->size = local_size;
+
+    fclose(f);
+}
+
+void mpi_load_labels(const char *path, Labels *lbls, int rank, int n_workers) {
+    FILE *f = fopen(path, "rb");
+    if (!f)
+        ERR("Could not open mpi train labels");
+
+    read_uint32(f); // always parse magic number
+    uint32_t total_size = read_uint32(f);
+    uint32_t local_size = total_size / n_workers;
+    uint32_t idx = (rank - 1) * local_size;
+    lbls->size = local_size;
+    fseek(f, 8 + idx, SEEK_SET);
+    lbls->data = (uint8_t *)malloc(local_size * sizeof(uint8_t));
+    fread(lbls->data, 1, lbls->size, f);
     fclose(f);
 }
 
