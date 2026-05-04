@@ -7,9 +7,13 @@
 #include <mpi.h>
 
 #define EPOCHS 40
-#define LR 0.01
-#define IMAGE_SIZE 784
-#define N_OUTPUTS 10
+
+void broadcast_network(Network *network) {
+    MPI_Bcast(network->weights_hidden, network->n_inputs * network->n_hidden, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(network->biases_hidden, network->n_hidden, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(network->weights_output, network->n_hidden * network->n_outputs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(network->biases_output, network->n_outputs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+}
 
 void one_hot(uint8_t label, double *vec) {
     for (int i = 0; i < N_OUTPUTS; i++)
@@ -43,6 +47,7 @@ int main(int argc, char **argv) {
 
     network_init(&network, IMAGE_SIZE, 64, N_OUTPUTS);
 
+    broadcast_network(&network);
 
     printf("poes\n");
     return 0;

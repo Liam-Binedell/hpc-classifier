@@ -8,6 +8,9 @@
 
 #include <stdint.h>
 
+#define LR 0.01
+#define N_OUTPUTS 10
+
 // My chosen activation funcs to help with MNIST problem
 double relu(double z);
 double softmax(double z, double *z_i, int size);

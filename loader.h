@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#define IMAGE_SIZE 784
+
 typedef struct {
     float **data;
     uint32_t size;

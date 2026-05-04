@@ -6,8 +6,6 @@
 #include <time.h>
 
 #define EPOCHS 40
-#define LR 0.01
-#define N_OUTPUTS 10
 
 void one_hot(uint8_t label, double *vec) {
     for (int i = 0; i < N_OUTPUTS; i++)
@@ -44,7 +42,7 @@ int main() {
     printf("Loaded %u test images\n", test_imgs.size);
     printf("Loaded %u test labels\n", test_lbls.size);
 
-    network_init(&network, train_imgs.img_size, 64, N_OUTPUTS);
+    network_init(&network, IMAGE_SIZE, 64, N_OUTPUTS);
     trainer_init(&trainer, &network);
 
     int correct;
