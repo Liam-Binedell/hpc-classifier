@@ -47,11 +47,12 @@ int main() {
     network_init(&network, train_imgs.img_size, 64, N_OUTPUTS);
     trainer_init(&trainer, &network);
 
+    int correct;
     double y[N_OUTPUTS];
 
     // TRAIN FOR THE SET AMOUNT OF EPOCHS
     for (int epoch = 0; epoch < EPOCHS; epoch++) {
-        int correct = 0;
+        correct = 0;
         for (int i = 0; i < train_imgs.size; i++) {
             one_hot(train_lbls.data[i], y);
             trainer_train(&trainer, &network, train_imgs.data[i], y, LR);
@@ -63,10 +64,19 @@ int main() {
     }
 
     // TEST TRAINED MODEL ON UNSEEN DATA
+    correct = 0;
+    for (int i = 0; i < test_imgs.size; i++) {
+        network_predict(&network, test_imgs.data[i]);
+        if (argmax(network.output, N_OUTPUTS) == test_lbls.data[i])
+            correct++;
+    }
+    printf("TESTING ACCURACY: %.2f%%\n", (double)correct/test_imgs.size * 100.0);
 
     trainer_free(&trainer);
     network_free(&network);
     free_images(&train_imgs);
     free(train_lbls.data);
+    free_images(&test_imgs);
+    free(test_lbls.data);
     return 0;
 }
