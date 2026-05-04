@@ -28,6 +28,9 @@ int main() {
 
     Images train_imgs = {NULL, 0, 0, 0, 0};
     Labels train_lbls = {NULL, 0};
+
+    Images test_imgs = {NULL, 0, 0, 0, 0};
+    Labels test_lbls = { NULL, 0};
     Network network;
     Trainer trainer;
 
@@ -35,6 +38,11 @@ int main() {
     load_labels("datasets/train-labels.idx1-ubyte", &train_lbls);
     printf("Loaded %u images\n", train_imgs.size);
     printf("Loaded %u labels\n", train_lbls.size);
+
+    load_images("datasets/test-images.idx3-ubyte", &test_imgs);
+    load_labels("datasets/test-labels.idx1-ubyte", &test_lbls);
+    printf("Loaded %u test images\n", test_imgs.size);
+    printf("Loaded %u test labels\n", test_lbls.size);
 
     network_init(&network, train_imgs.img_size, 64, N_OUTPUTS);
     trainer_init(&trainer, &network);
