@@ -24,10 +24,10 @@ int argmax(double *vec, int size) {
 int main() {
     srand(time(NULL));
 
-    Images train_imgs = {NULL, 0, 0, 0, 0};
+    Images train_imgs = {NULL, 0};
     Labels train_lbls = {NULL, 0};
 
-    Images test_imgs = {NULL, 0, 0, 0, 0};
+    Images test_imgs = {NULL, 0};
     Labels test_lbls = {NULL, 0};
     Network network;
     Trainer trainer;
