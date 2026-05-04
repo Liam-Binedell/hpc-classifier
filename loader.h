@@ -6,9 +6,6 @@
 typedef struct {
     float **data;
     uint32_t size;
-    uint32_t n_rows;
-    uint32_t n_cols;
-    uint32_t img_size;
 } Images;
 
 typedef struct {
