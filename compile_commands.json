@@ -1,0 +1,13 @@
+[
+  {
+    "file": "mpi_main.c",
+    "arguments": [
+      "/usr/bin/gcc",
+      "mpi_main.c",
+      "-o",
+      "mpi_main"
+    ],
+    "directory": "/home/daddyprofbundadell/Documents/hpc/hpc-classifier",
+    "output": "mpi_main"
+  }
+]
