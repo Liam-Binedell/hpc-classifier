@@ -15,6 +15,13 @@ void broadcast_network(Network *network) {
     MPI_Bcast(network->biases_output, network->n_outputs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
+void reduce_network(Network *network, Network *global) {
+    MPI_Reduce(network->weights_hidden, global->weights_hidden, network->n_inputs * network->n_hidden, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(network->biases_hidden, global->biases_hidden, network->n_hidden, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(network->weights_output, global->weights_output, network->n_hidden * network->n_outputs, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(network->biases_output, global->biases_output, network->n_outputs, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+}
+
 void one_hot(uint8_t label, double *vec) {
     for (int i = 0; i < N_OUTPUTS; i++)
         vec[i] = 0.0;
@@ -42,10 +49,12 @@ int main(int argc, char **argv) {
     Images test_imgs = {NULL, 0};
     Labels test_lbls = {NULL, 0};
 
-    Network network;
+    Network network, global;
     Trainer trainer;
 
+    network_init(&global, IMAGE_SIZE, 64, N_OUTPUTS);
     network_init(&network, IMAGE_SIZE, 64, N_OUTPUTS);
+    trainer_init(&trainer, &network);
 
     broadcast_network(&network);
 
@@ -54,9 +63,37 @@ int main(int argc, char **argv) {
         mpi_load_labels("datasets/train-labels.idx1-ubyte", &train_lbls, rank, n_workers);
         printf("Process %d loaded %u images\n", rank, train_imgs.size);
         printf("Process %d loaded %u labels\n", rank, train_lbls.size);
+    }
+
+    int correct;
+    double accuracy, prev_accuracy;
+    double y[N_OUTPUTS];
+
+    prev_accuracy = accuracy = 0;
+    for (int epoch = 0; epoch < EPOCHS; epoch++) {
+        if (rank != 0) {
+            correct = 0;
+            for (int i = 0; i < train_imgs.size; i++) {
+                one_hot(train_lbls.data[i], y);
+                trainer_train(&trainer, &network, train_imgs.data[i], y, LR);
+                if (argmax(network.output, N_OUTPUTS) == train_lbls.data[i])
+                    correct++;
+            }
+        }
+        reduce_network(&network, &global);
+        if (rank == 0) {
+            network = global;
+        }
+        broadcast_network(&network);
+    }
+
+    if (rank != 0) {
         free_images(&train_imgs);
         free(train_lbls.data);
     }
+    network_free(&network);
+    network_free(&global);
+    trainer_free(&trainer);
     MPI_Finalize();
     return 0;
 }
